@@ -1,60 +1,112 @@
 <script>
   import { T, useFrame } from '@threlte/core'
+  import { onMount } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
 
-  let rotation = 0
+
+  let blocks = []
+  let frameCount = 0
+  let cursorY = 0.5
+  let score = 0 
+  const BLOCK_SPAWN_INTERVAL = 300
+  const FLOOR_Y = 0
+  const CEILING_Y = 10
+  const SPAWN_Z = -40
+  const CAMERA_Z = 10
+  const BLOCK_SPEED = 0.05
+  const dispatch = createEventDispatcher();
+
+  function handleMouseMove(event) {
+    cursorY = 1 - 0.95 * (event.clientY / window.innerHeight) - 0.05
+  }
+
+  function checkCollision() {
+    const cameraY = FLOOR_Y + cursorY * (CEILING_Y - FLOOR_Y)
+    for (const block of blocks) {
+      const gapCenter = block.y
+      const gapSize = 2
+      const gapTop = gapCenter + gapSize / 2
+      const gapBottom = gapCenter - gapSize / 2
+
+      if (block.z >= CAMERA_Z - 1 && block.z <= CAMERA_Z + 1) {
+        if (cameraY < gapBottom || cameraY > gapTop) {
+          score = 0 
+          dispatch('score', score);
+          return true
+        }
+      }
+    }
+    return false
+  }
+
   useFrame(() => {
-    rotation += 0.001
+    frameCount++
+
+    if (frameCount % BLOCK_SPAWN_INTERVAL === 0) {
+      const blockY = FLOOR_Y + Math.random() * (CEILING_Y - FLOOR_Y)
+      blocks = [...blocks, { x: 0, y: blockY, z: SPAWN_Z }]
+    }
+
+    blocks = blocks
+      .map(block => ({ ...block, z: block.z + BLOCK_SPEED }))
+      .filter(block => {
+        if (block.z >= CAMERA_Z) {
+          score += 1;
+          dispatch('score', score);
+          return false;
+        }
+        return true;
+      });
+
+    if (checkCollision()) {
+      blocks = []
+    }
   })
+
+  onMount(() => {
+    score = 0;
+    dispatch('score', score);
+  });
 </script>
 
-<T.Group rotation.y={rotation}>
-  <T.PerspectiveCamera
-    makeDefault
-    position={[-10, 10, 10]}
-    fov={15}
-    on:create={({ ref }) => {
-      ref.lookAt(0, 1, 0)
-    }}
-  />
-</T.Group>
+<svelte:window on:mousemove={handleMouseMove} />
 
-<!-- Floor -->
-<T.Mesh rotation.x={(90 * Math.PI) / 180}>
-  <T.CircleGeometry args={[3, 16]} />
-  <T.MeshBasicMaterial
-    color="#666666"
-    wireframe
-  />
-</T.Mesh>
-
-<T.DirectionalLight
-  intensity={0.8}
-  position.x={5}
-  position.y={10}
+<T.PerspectiveCamera
+  makeDefault
+  position={[0, FLOOR_Y + cursorY * (CEILING_Y - FLOOR_Y), CAMERA_Z]}
+  fov={75}
+  on:create={({ ref }) => {
+    ref.lookAt(0, FLOOR_Y + 0.5 * (CEILING_Y - FLOOR_Y), 0)
+  }}
 />
-<T.AmbientLight intensity={0.2} />
 
-<T.Mesh
-  position.y={1.2}
-  position.z={-0.75}
->
-  <T.BoxGeometry />
-  <T.MeshStandardMaterial color="#0059BA" />
+<T.DirectionalLight position={[5, 5, -15]} intensity={1.5} />
+<T.DirectionalLight position={[-5, 5, -15]} intensity={1.5} />
+<T.AmbientLight intensity={1.5} />
+
+<T.Mesh position.y={FLOOR_Y} rotation.x={-Math.PI / 2}>
+  <T.PlaneGeometry args={[20, 80]} />
+  <T.MeshStandardMaterial color="#BB8888" />
 </T.Mesh>
 
-<T.Mesh
-  position={[1.2, 1.5, 0.75]}
-  rotation.x={5}
-  rotation.y={71}
->
-  <T.TorusKnotGeometry args={[0.5, 0.15, 100, 12, 2, 3]} />
-  <T.MeshStandardMaterial color="#F85122" />
+<T.Mesh position.y={CEILING_Y} rotation.x={Math.PI / 2}>
+  <T.PlaneGeometry args={[20, 80]} />
+  <T.MeshStandardMaterial color="#8888BB" />
 </T.Mesh>
 
-<T.Mesh
-  position={[-1.4, 1.5, 0.75]}
-  rotation={[-5, 128, 10]}
->
-  <T.IcosahedronGeometry />
-  <T.MeshStandardMaterial color="#F8EBCE" />
-</T.Mesh>
+{#each blocks as block}
+  {@const gapCenter = block.y}
+  {@const gapSize = 2}
+  {@const topHeight = CEILING_Y - (gapCenter + gapSize/2)}
+  {@const bottomHeight = gapCenter - gapSize/2 - FLOOR_Y}
+  
+  <T.Mesh position={[block.x, CEILING_Y - topHeight/2, block.z]}>
+    <T.BoxGeometry args={[20, topHeight, 1]}/>
+    <T.MeshStandardMaterial color="#8888BB" />
+  </T.Mesh>
+  
+  <T.Mesh position={[block.x, FLOOR_Y + bottomHeight/2, block.z]}>
+    <T.BoxGeometry args={[20, bottomHeight, 1]}/>
+    <T.MeshStandardMaterial color="#BB8888" />
+  </T.Mesh>
+{/each}

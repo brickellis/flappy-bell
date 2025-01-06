@@ -1,4 +1,4 @@
-<script>
+<!-- <script>
     import { onMount } from 'svelte';
     import ml5 from 'ml5';
 
@@ -55,4 +55,4 @@
       width: 640px;
       height: 480px;
     }
-  </style>
+  </style> -->
