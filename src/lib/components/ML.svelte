@@ -18,6 +18,7 @@
   export let width = 640;
   export let height = 480;
   export let showVideo = true;
+
   const dispatch = createEventDispatcher();
   const color = "#00ff00";
   const lineWidth = 2;

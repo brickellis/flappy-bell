@@ -13,6 +13,11 @@
   let timer = Date.now();
   let gameStarted = false;
   let normalizedDistance = 0;
+  let score = 0;
+
+  function handleScoreUpdate(event) {
+    score = event.detail;
+  }
 
   function handleKeypoints(event) {
     if (!Array.isArray(event.detail.value)) return;
@@ -84,6 +89,8 @@
       timer = Date.now();
     }
     if (step == "game" && Date.now() - timer > 1000) {
+      const instructionsDiv = document.querySelector(".instructions-display");
+      instructionsDiv.innerHTML = score;
       gameStarted = true;
       showVideo = false;
       if (handBool == "right") {
@@ -95,10 +102,10 @@
   }
 </script>
 
-<ML {showVideo} on:keypoints={handleKeypoints} {normalizedDistance} />
+<ML {showVideo} on:keypoints={handleKeypoints} />
 {#if gameStarted}
   <Canvas>
-    <Scene />
+    <Scene {normalizedDistance} on:score={handleScoreUpdate} />
   </Canvas>
 {/if}
 
@@ -109,13 +116,12 @@
   >
     Keypoints:
   </div>
-
-  <div
-    class="instructions-display"
-    style="position: absolute; top: 3%; left: 50%; transform: translateX(-50%); color: white; font-size: 2em; text-align: center;"
-  >
-    Clean the kettlebell with your preferred hand.
-    <br />When the text turns green, press the bell.
-    <br />Refresh the page to recalibrate.
-  </div>
 {/if}
+<div
+  class="instructions-display"
+  style="position: absolute; top: 3%; left: 50%; transform: translateX(-50%); color: white; font-size: 2em; text-align: center;"
+>
+  Clean the kettlebell with your preferred hand.
+  <br />When the text turns green, press the bell.
+  <br />Refresh the page to recalibrate.
+</div>

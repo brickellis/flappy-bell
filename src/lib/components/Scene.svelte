@@ -1,9 +1,10 @@
 <script>
+    import { norm } from '@tensorflow/tfjs-core';
   import { T, useFrame } from '@threlte/core'
   import { onMount } from 'svelte';
   import { createEventDispatcher } from 'svelte';
 
-
+  export let normalizedDistance = true;
   let blocks = []
   let frameCount = 0
   let cursorY = 0.5
@@ -15,10 +16,6 @@
   const CAMERA_Z = 10
   const BLOCK_SPEED = 0.05
   const dispatch = createEventDispatcher();
-
-  function handleMouseMove(event) {
-    cursorY = 1 - 0.95 * (event.clientY / window.innerHeight) - 0.05
-  }
 
   function checkCollision() {
     const cameraY = FLOOR_Y + cursorY * (CEILING_Y - FLOOR_Y)
@@ -41,7 +38,9 @@
 
   useFrame(() => {
     frameCount++
-
+    console.log(normalizedDistance);
+    cursorY = normalizedDistance;
+    cursorY = Math.min(Math.max(cursorY, 0.05), 0.95);
     if (frameCount % BLOCK_SPAWN_INTERVAL === 0) {
       const blockY = FLOOR_Y + Math.random() * (CEILING_Y - FLOOR_Y)
       blocks = [...blocks, { x: 0, y: blockY, z: SPAWN_Z }]
@@ -69,7 +68,7 @@
   });
 </script>
 
-<svelte:window on:mousemove={handleMouseMove} />
+<svelte:window />
 
 <T.PerspectiveCamera
   makeDefault
