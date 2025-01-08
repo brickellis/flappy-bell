@@ -3,8 +3,11 @@ import adapter from '@sveltejs/adapter-static';
 export default {
   kit: {
     adapter: adapter(),
+    prerender: {
+      entries: ['*'],
+    },
     paths: {
-      base: process.env.NODE_ENV === 'production' ? '/flappy-bell' : ''
-    }
-  }
-}
+      base: '/flappy-bell',
+    },
+  },
+};
